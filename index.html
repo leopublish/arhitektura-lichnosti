@@ -10,14 +10,18 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:wght@600;700&display=swap">
 <style>
-/* Layout: одна колонка 760px (1040px у ведущего) на «чертёжной» сетке; золотое свечение сверху, карточки как листы проекта */
+/* Layout: колонка 760px (1040px у ведущего). Фирменный элемент — тёмно-синие «чертёжные» панели с золотой сеткой:
+   герой со схемой-зданием из четырёх этажей-факторов, диаграмма результата и табло ведущего. */
 :root{
   --bg:#f4f5fa;--text:#0b1b3d;--muted:#5b6684;--card:#ffffff;--line:#dbe0ee;--gold:#a87a1f;
   --f0:#c9972b;--f1:#3b6fd6;--f2:#1b9d86;--f3:#d4506c;
-  --grid:rgba(11,27,61,.045);
   --soft:rgba(11,27,61,.04);
   --shadow:0 8px 24px rgba(8,18,48,.08);
   --shadow-lift:0 14px 32px rgba(8,18,48,.12);
+  /* панель-чертёж: одинаково тёмная в обеих темах */
+  --panel:#0b1b3d;--panel-2:#12285a;--panel-text:#f4f1e8;--panel-muted:#aab4d0;
+  --panel-line:rgba(226,187,79,.22);--panel-grid:rgba(226,187,79,.07);--panel-gold:#e2bb4f;
+  --p0:#e2bb4f;--p1:#6c9bff;--p2:#3ccfb4;--p3:#ff8aa1;
   --font-text:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   --font-display:"Playfair Display",Georgia,serif;
   color-scheme:light;
@@ -26,20 +30,20 @@
   :root:not([data-theme="light"]){
     --bg:#081230;--text:#f4f1e8;--muted:#9ba7c7;--card:#102050;--line:#24376f;--gold:#e2bb4f;
     --f0:#e2bb4f;--f1:#6c9bff;--f2:#3ccfb4;--f3:#ff8aa1;
-    --grid:rgba(155,167,199,.06);
     --soft:rgba(244,241,232,.04);
     --shadow:0 8px 24px rgba(0,0,0,.3);
     --shadow-lift:0 14px 32px rgba(0,0,0,.4);
+    --panel:#0c1a45;--panel-2:#132a66;--panel-line:rgba(226,187,79,.3);
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#081230;--text:#f4f1e8;--muted:#9ba7c7;--card:#102050;--line:#24376f;--gold:#e2bb4f;
   --f0:#e2bb4f;--f1:#6c9bff;--f2:#3ccfb4;--f3:#ff8aa1;
-  --grid:rgba(155,167,199,.06);
   --soft:rgba(244,241,232,.04);
   --shadow:0 8px 24px rgba(0,0,0,.3);
   --shadow-lift:0 14px 32px rgba(0,0,0,.4);
+  --panel:#0c1a45;--panel-2:#132a66;--panel-line:rgba(226,187,79,.3);
   color-scheme:dark;
 }
 :root[data-theme="light"]{color-scheme:light}
@@ -58,22 +62,10 @@ body{
   font-size:16px;
   line-height:1.5;
   -webkit-font-smoothing:antialiased;
-  position:relative;
-}
-/* «чертёжная» сетка — тема архитектуры, гаснет к низу */
-body::before{
-  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
-  background-image:
-    linear-gradient(var(--grid) 1px,transparent 1px),
-    linear-gradient(90deg,var(--grid) 1px,transparent 1px);
-  background-size:32px 32px;
-  -webkit-mask-image:linear-gradient(180deg,#000 0,rgba(0,0,0,.35) 55%,transparent 100%);
-  mask-image:linear-gradient(180deg,#000 0,rgba(0,0,0,.35) 55%,transparent 100%);
 }
 [hidden]{display:none!important}
 
 .container{
-  position:relative;z-index:1;
   max-width:760px;
   margin:0 auto;
   padding-top:22px;
@@ -83,187 +75,179 @@ body::before{
 }
 body.presenter .container{max-width:1040px}
 
+/* Brand bar (на всех экранах, кроме стартового) */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:18px;margin-bottom:22px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.01em}
+.logo{display:flex;flex-direction:column;align-items:center;gap:2px;width:22px}
+.logo i{display:block;height:3px;border-radius:2px}
+.logo i:nth-child(1){width:10px;background:var(--f3)}
+.logo i:nth-child(2){width:14px;background:var(--f2)}
+.logo i:nth-child(3){width:18px;background:var(--f1)}
+.logo i:nth-child(4){width:22px;background:var(--f0)}
+
 .screen{display:flex;flex-direction:column;gap:22px}
-/* тонкая золотая линия — «линия чертежа» между крупными блоками */
-.rule{height:1px;border:0;margin:0;background:linear-gradient(90deg,var(--gold),transparent 80%);opacity:.55}
-.form-row{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch}
-.form-row .input{flex:1 1 240px;min-width:0}
 .enter{animation:enter .45s ease both}
 @keyframes enter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
 h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance}
-h1{font-size:clamp(34px,9vw,60px);line-height:1.05;font-weight:700;letter-spacing:-.015em}
+h1{font-size:clamp(34px,9vw,60px);line-height:1.04;font-weight:700;letter-spacing:-.015em}
 h2{font-size:clamp(22px,5vw,32px);line-height:1.22;font-weight:600}
 .gold{color:var(--gold)}
 .tag{text-transform:uppercase;color:var(--gold);font-size:13px;font-weight:600;letter-spacing:.08em;margin:0}
 .muted{color:var(--muted)}
 p{margin:0}
 
-/* Hero */
-.hero{display:flex;flex-direction:column;gap:16px;padding-top:clamp(12px,6vw,56px);padding-bottom:clamp(4px,2vw,14px)}
-.subtitle{font-size:clamp(17px,2.6vw,21px);line-height:1.45;max-width:36ch}
-/* четыре «этажа» — четыре фактора, из которых строится личность */
-.floors{display:flex;flex-direction:column;gap:5px;width:max-content;margin-top:4px}
-.floors span{display:block;height:6px;border-radius:3px;transform-origin:left center;animation:build .6s cubic-bezier(.2,.8,.2,1) both}
-.floors span:nth-child(1){width:56px;background:var(--f3);animation-delay:.36s}
-.floors span:nth-child(2){width:84px;background:var(--f2);animation-delay:.24s}
-.floors span:nth-child(3){width:112px;background:var(--f1);animation-delay:.12s}
-.floors span:nth-child(4){width:140px;background:var(--f0)}
-@keyframes build{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-
-.card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:18px;
-  padding:18px;
-  box-shadow:var(--shadow);
-}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
 .stack{display:flex;flex-direction:column;gap:14px}
+
+/* Панель-чертёж */
+.panel{
+  position:relative;overflow:hidden;
+  background:
+    linear-gradient(var(--panel-grid) 1px,transparent 1px) 0 0/28px 28px,
+    linear-gradient(90deg,var(--panel-grid) 1px,transparent 1px) 0 0/28px 28px,
+    radial-gradient(90% 70% at 100% 0,var(--panel-2),transparent 70%),
+    var(--panel);
+  color:var(--panel-text);
+  border:1px solid var(--panel-line);
+  border-radius:22px;
+  padding:clamp(20px,4.5vw,36px);
+  box-shadow:0 20px 50px rgba(8,18,48,.22);
+}
+.panel .tag,.panel .gold{color:var(--panel-gold)}
+.panel .muted{color:var(--panel-muted)}
+/* угловые засечки, как на чертеже */
+.panel::before,.panel::after{content:"";position:absolute;width:18px;height:18px;border-color:var(--panel-gold);opacity:.7;pointer-events:none}
+.panel::before{top:12px;left:12px;border-top:1px solid;border-left:1px solid}
+.panel::after{bottom:12px;right:12px;border-bottom:1px solid;border-right:1px solid}
+
+/* START */
+.hero{display:grid;grid-template-columns:1fr;gap:28px;align-items:center}
+@media (min-width:700px){.hero{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.hero-text{display:flex;flex-direction:column;gap:14px;min-width:0}
+.hero .subtitle{font-size:clamp(17px,2.4vw,20px);line-height:1.45;color:var(--panel-muted);max-width:30ch}
+.building{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.floor{
+  --c:var(--p0);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:var(--w);min-height:46px;padding:8px 10px;
+  border:1px solid var(--c);border-radius:8px;
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0));
+  color:var(--panel-text);font-size:14px;font-weight:600;line-height:1.2;text-align:center;
+  animation:rise .6s cubic-bezier(.2,.8,.2,1) both;
+}
+.floor::before{content:"";flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:var(--c)}
+.floor:nth-child(1){animation-delay:.45s}
+.floor:nth-child(2){animation-delay:.3s}
+.floor:nth-child(3){animation-delay:.15s}
+.ground{width:100%;height:2px;margin-top:4px;background:linear-gradient(90deg,transparent,var(--panel-gold),transparent)}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
 .intro{padding:clamp(18px,4vw,28px)}
-.quote{font-style:italic;color:var(--muted);padding-left:14px;border-left:2px solid var(--gold)}
+.quote{font-family:var(--font-display);font-style:italic;font-weight:600;font-size:clamp(18px,2.6vw,21px);line-height:1.4;color:var(--muted);padding-left:16px;border-left:2px solid var(--gold)}
+.form-row{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch}
+.form-row .input{flex:1 1 240px;min-width:0}
 
 .input{
-  width:100%;
-  font:inherit;
-  font-size:17px;
-  color:var(--text);
-  background:var(--soft);
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:13px 14px;
-  outline:none;
+  width:100%;font:inherit;font-size:17px;color:var(--text);
+  background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:13px 14px;outline:none;
   transition:border-color .2s ease,background-color .2s ease;
 }
 .input::placeholder{color:var(--muted)}
 .input:focus{border-color:var(--gold);background:var(--card)}
 
-.btn{
-  font-family:var(--font-text);
-  cursor:pointer;
-  border-radius:999px;
-  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
-  -webkit-tap-highlight-color:transparent;
-  touch-action:manipulation;
-}
+.btn{font-family:var(--font-text);cursor:pointer;border-radius:999px;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .btn:focus-visible,.answer:focus-visible,.input:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .btn-primary{
-  background:linear-gradient(135deg,#ecc965,#b8892b);
-  color:#0b1b3d;
-  font-size:17px;
-  font-weight:600;
-  padding:14px 28px;
-  border:0;
+  background:linear-gradient(135deg,#ecc965,#b8892b);color:#0b1b3d;font-size:17px;font-weight:600;padding:14px 28px;border:0;
   box-shadow:0 8px 20px rgba(184,137,43,.3),inset 0 1px 0 rgba(255,255,255,.35);
 }
-.btn-ghost{
-  background:transparent;
-  color:var(--text);
-  border:1px solid var(--line);
-  font-size:15px;
-  font-weight:600;
-  padding:10px 18px;
-}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-size:15px;font-weight:600;padding:10px 18px}
 .btn-small{font-size:14px;padding:8px 14px}
 @media (hover:hover){
   .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(184,137,43,.36),inset 0 1px 0 rgba(255,255,255,.35)}
   .btn-ghost:hover{border-color:var(--gold)}
 }
-.btn:active{transform:translateY(0)}
 .self-start{align-self:flex-start}
 
-/* Quiz */
+/* QUIZ */
 .top-row{display:flex;align-items:center;gap:14px}
 .counter{color:var(--gold);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums;min-width:3.2em}
 .progress{flex:1;height:6px;border-radius:999px;background:var(--line);overflow:hidden}
 .progress-fill{height:100%;width:0;background:var(--gold);border-radius:999px;transition:width .35s ease}
-.question{padding-top:6px;max-width:30ch}
+.question{max-width:32ch;padding-block:6px}
 
 .answers{display:grid;grid-template-columns:1fr;gap:12px}
 @media (min-width:700px){.answers{grid-template-columns:1fr 1fr}}
 .answer{
-  display:flex;align-items:flex-start;gap:14px;
-  font:inherit;
-  font-size:17px;
-  line-height:1.42;
-  color:var(--text);
-  text-align:left;
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:18px;
-  min-height:84px;
-  cursor:pointer;
-  box-shadow:0 1px 2px rgba(8,18,48,.04);
-  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
-  -webkit-tap-highlight-color:transparent;
-  touch-action:manipulation;
+  display:flex;align-items:center;gap:14px;
+  font:inherit;font-size:17px;line-height:1.42;color:var(--text);text-align:left;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;min-height:84px;
+  cursor:pointer;box-shadow:0 1px 2px rgba(8,18,48,.04);
+  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease,background-color .2s ease;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
 }
-.answer .mark{
-  flex:0 0 20px;width:20px;height:20px;margin-top:2px;border-radius:50%;
-  border:2px solid var(--line);position:relative;transition:border-color .2s ease;
-}
-.answer .mark::after{
-  content:"";position:absolute;inset:3px;border-radius:50%;background:var(--gold);
-  transform:scale(0);transition:transform .2s ease;
+.letter{
+  flex:0 0 36px;width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:700;font-size:17px;
+  color:var(--gold);border:1px solid var(--line);background:var(--soft);
+  transition:background-color .2s ease,color .2s ease,border-color .2s ease;
 }
 .answer-text{min-width:0}
 @media (hover:hover){
   .answer:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:var(--shadow-lift)}
-  .answer:hover .mark{border-color:var(--gold)}
+  .answer:hover .letter{border-color:var(--gold)}
 }
 .answer.selected{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold),var(--shadow)}
-.answer.selected .mark{border-color:var(--gold)}
-.answer.selected .mark::after{transform:scale(1)}
+.answer.selected .letter{background:linear-gradient(135deg,#ecc965,#b8892b);color:#0b1b3d;border-color:transparent}
 
 .nav-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-height:46px}
 .nav-row .spacer{flex:1}
 
-/* Result */
+/* RESULT */
+.result-head{display:flex;flex-direction:column;gap:12px}
 .result-title{font-family:var(--font-display);font-weight:700;font-size:clamp(26px,6.5vw,44px);line-height:1.15;margin:0;text-wrap:balance}
 .leader-card{padding:clamp(18px,4vw,26px)}
 .leader-name{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:clamp(20px,3.6vw,26px);line-height:1.2;color:var(--gold);margin:0}
 .dot{flex:0 0 auto;width:12px;height:12px;border-radius:50%;display:inline-block}
 .leader-card strong{font-weight:600}
-.chart{display:flex;flex-wrap:wrap;align-items:center;gap:28px;padding:clamp(18px,4vw,26px)}
-.donut{position:relative;width:172px;height:172px;flex:0 0 172px;border-radius:50%;background:var(--line);margin:0 auto}
-.donut::after{content:"";position:absolute;inset:28px;border-radius:50%;background:var(--card)}
-.donut-value{
-  position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;
-  font-family:var(--font-display);font-weight:700;font-size:28px;font-variant-numeric:tabular-nums;
-}
+.chart{display:flex;flex-wrap:wrap;align-items:center;gap:32px}
+.donut{position:relative;width:172px;height:172px;flex:0 0 172px;border-radius:50%;background:rgba(255,255,255,.1);margin:0 auto;box-shadow:0 0 0 6px rgba(226,187,79,.08)}
+.donut::after{content:"";position:absolute;inset:28px;border-radius:50%;background:var(--panel)}
+.donut-value{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:28px;font-variant-numeric:tabular-nums;color:var(--panel-gold)}
 .bars{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:16px}
 .bar-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 12px;align-items:center}
 .bar-label{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;min-width:0}
 .bar-label .dot{width:10px;height:10px}
 .bar-value{font-weight:600;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
 .bar-track{grid-column:1 / -1;height:12px;border-radius:999px;background:var(--line);overflow:hidden}
+.panel .bar-track{background:rgba(255,255,255,.1)}
 .bar-fill{height:100%;width:0;border-radius:999px;transition:width .7s ease}
 .note{font-size:15px;max-width:68ch}
 .btn-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 
-/* Presenter */
-.presenter-row{display:flex;flex-wrap:wrap;gap:18px;align-items:stretch;justify-content:space-between}
+/* PRESENTER */
+.presenter-row{display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between}
 .count-block{display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:0}
-.big-count{font-family:var(--font-display);font-weight:700;color:var(--gold);font-size:clamp(54px,14vw,110px);line-height:1;font-variant-numeric:tabular-nums}
+.big-count{font-family:var(--font-display);font-weight:700;color:var(--panel-gold);font-size:clamp(54px,14vw,110px);line-height:1;font-variant-numeric:tabular-nums}
 .count-caption{font-size:clamp(15px,2vw,19px)}
-.qr-card{display:flex;flex-direction:column;align-items:center;gap:10px;margin:0 auto 0 0}
-@media (min-width:620px){.qr-card{margin:0}}
+.qr-card{display:flex;flex-direction:column;align-items:center;gap:10px}
 .qr-box{width:190px;height:190px;padding:10px;background:#ffffff;border-radius:12px;display:flex;align-items:center;justify-content:center}
 .qr-box img,.qr-box canvas{width:170px;height:170px}
-.qr-caption{font-weight:600;text-align:center}
-.p-bars{padding:clamp(18px,3vw,28px);gap:20px}
+.qr-caption{font-weight:600;text-align:center;color:var(--panel-text)}
+.p-bars{gap:20px}
 .presenter .bar-label,.presenter .bar-value{font-size:clamp(15px,2vw,20px)}
 .presenter .bar-track{height:16px}
 .manual{display:flex;flex-wrap:wrap;gap:8px}
 .status{font-weight:600;display:flex;align-items:center;gap:10px}
 .status::before{content:"";flex:0 0 10px;width:10px;height:10px;border-radius:50%;background:var(--muted);opacity:.6}
-.status.live::before{background:var(--f2);opacity:1;box-shadow:0 0 0 0 var(--f2);animation:pulse 2s ease-out infinite}
+.status.live::before{background:var(--f2);opacity:1;animation:pulse 2s ease-out infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(27,157,134,.5)}100%{box-shadow:0 0 0 10px rgba(27,157,134,0)}}
-.result-head{display:flex;flex-direction:column;gap:12px}
 
 @media (prefers-reduced-motion:reduce){
-  .enter,.floors span,.status.live::before{animation:none}
-  .btn,.answer,.answer .mark,.answer .mark::after,.progress-fill,.bar-fill,.input{transition:none}
+  .enter,.floor,.status.live::before{animation:none}
+  .btn,.answer,.letter,.progress-fill,.bar-fill,.input{transition:none}
   .btn-primary:hover,.answer:hover{transform:none}
 }
 </style>
@@ -271,15 +255,26 @@ p{margin:0}
 <body>
 <main class="container" id="app">
 
+  <header class="topbar" id="topbar" hidden>
+    <div class="brand"><span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Архитектура личности</div>
+  </header>
+
   <!-- SCREEN 1: START -->
   <section class="screen" id="screen-start">
-    <div class="hero">
-      <p class="tag">Образовательная игра-опрос</p>
-      <h1>Архитектура <span class="gold">личности</span></h1>
-      <p class="subtitle muted">Факторы развития личности: что делает нас лучше каждый день?</p>
-      <div class="floors" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    <div class="panel hero">
+      <div class="hero-text">
+        <p class="tag">Образовательная игра-опрос</p>
+        <h1>Архитектура <span class="gold">личности</span></h1>
+        <p class="subtitle">Факторы развития личности: что делает нас лучше каждый день?</p>
+      </div>
+      <div class="building" aria-hidden="true">
+        <div class="floor" style="--c:var(--p3);--w:58%">Самовоспитание</div>
+        <div class="floor" style="--c:var(--p2);--w:72%">Воспитание и образование</div>
+        <div class="floor" style="--c:var(--p1);--w:86%">Социальная среда</div>
+        <div class="floor" style="--c:var(--p0);--w:100%">Природные задатки</div>
+        <div class="ground"></div>
+      </div>
     </div>
-    <hr class="rule">
     <div class="card stack intro">
       <p>10 жизненных ситуаций. Правильных и неправильных ответов нет — каждый вариант отражает ваш приоритет. В конце вы увидите, какой фактор влияет на вас сильнее всего.</p>
       <p class="quote">«Каждый человек уникален. Но что именно больше всего влияет на то, кем мы становимся?»</p>
@@ -313,9 +308,8 @@ p{margin:0}
       <p class="tag" id="resultTag">Ваш результат</p>
       <h2 class="result-title" id="resultTitle"></h2>
     </div>
-    <hr class="rule">
     <div class="stack" id="leaderCards"></div>
-    <div class="card chart">
+    <div class="panel chart">
       <div class="donut" id="donut"><div class="donut-value" id="donutValue"></div></div>
       <div class="bars" id="resultBars"></div>
     </div>
@@ -329,17 +323,17 @@ p{margin:0}
   <!-- PRESENTER MODE -->
   <section class="screen presenter" id="screen-presenter" hidden>
     <p class="tag">Режим ведущего</p>
-    <div class="presenter-row">
+    <div class="panel presenter-row">
       <div class="count-block">
         <div class="big-count" id="pCount" aria-live="polite">0</div>
         <p class="muted count-caption">участников · анонимная статистика</p>
       </div>
-      <div class="card qr-card">
+      <div class="qr-card">
         <div class="qr-box"><div id="qr"></div></div>
         <p class="qr-caption">Присоединяйтесь по QR-коду</p>
       </div>
     </div>
-    <div class="card bars p-bars" id="pBars"></div>
+    <div class="panel bars p-bars" id="pBars"></div>
     <div class="card stack">
       <p class="muted">Ссылка для QR — вставьте адрес опубликованной игры, если он отличается.</p>
       <input class="input" id="qrUrl" type="text" autocomplete="off" aria-label="Ссылка для QR">
@@ -485,10 +479,11 @@ p{margin:0}
     for (var i = 0; i < 8; i++) s += chars.charAt(Math.floor(Math.random() * chars.length));
     return s;
   }
-  function makeDot(f){
+  // внутри тёмной панели используются яркие версии цветов факторов (--p0..--p3)
+  function makeDot(f, pal){
     var d = document.createElement('span');
     d.className = 'dot';
-    d.style.background = 'var(--f' + f + ')';
+    d.style.background = 'var(--' + (pal || 'f') + f + ')';
     d.setAttribute('aria-hidden', 'true');
     return d;
   }
@@ -646,6 +641,7 @@ p{margin:0}
     state.screen = name;
     Object.keys(screens).forEach(function(k){ screens[k].hidden = (k !== name); });
     document.body.classList.toggle('presenter', name === 'presenter');
+    $('topbar').hidden = (name === 'start');
     if (name === 'presenter') startPolling(); else stopPolling();
     playEnter(screens[name]);
     try { window.scrollTo(0, 0); } catch (e) {}
@@ -669,8 +665,9 @@ p{margin:0}
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
       b.setAttribute('data-f', String(f));
       var mark = document.createElement('span');
-      mark.className = 'mark';
+      mark.className = 'letter';
       mark.setAttribute('aria-hidden', 'true');
+      mark.textContent = 'АБВГ'.charAt(grid.children.length);
       var txt = document.createElement('span');
       txt.className = 'answer-text';
       txt.textContent = Q.a[f];
@@ -733,6 +730,7 @@ p{margin:0}
   }
 
   function buildBars(container, items){
+    var pal = container.closest('.panel') ? 'p' : 'f';
     container.innerHTML = '';
     var fills = [];
     items.forEach(function(it){
@@ -740,7 +738,7 @@ p{margin:0}
       row.className = 'bar-row';
       var label = document.createElement('span');
       label.className = 'bar-label';
-      label.appendChild(makeDot(it.f));
+      label.appendChild(makeDot(it.f, pal));
       label.appendChild(document.createTextNode(it.label));
       var val = document.createElement('span');
       val.className = 'bar-value';
@@ -749,7 +747,7 @@ p{margin:0}
       track.className = 'bar-track';
       var fill = document.createElement('div');
       fill.className = 'bar-fill';
-      fill.style.background = 'var(--f' + it.f + ')';
+      fill.style.background = 'var(--' + pal + it.f + ')';
       fill.style.width = '0%';
       track.appendChild(fill);
       row.appendChild(label);
@@ -811,11 +809,11 @@ p{margin:0}
       if (!p) return;
       var s = acc, e = acc + p;
       if (nonZero > 1){
-        stops.push('var(--card) ' + s + '% ' + (s + GAP) + '%');
-        stops.push('var(--f' + f + ') ' + (s + GAP) + '% ' + (e - GAP) + '%');
-        stops.push('var(--card) ' + (e - GAP) + '% ' + e + '%');
+        stops.push('var(--panel) ' + s + '% ' + (s + GAP) + '%');
+        stops.push('var(--p' + f + ') ' + (s + GAP) + '% ' + (e - GAP) + '%');
+        stops.push('var(--panel) ' + (e - GAP) + '% ' + e + '%');
       } else {
-        stops.push('var(--f' + f + ') ' + s + '% ' + e + '%');
+        stops.push('var(--p' + f + ') ' + s + '% ' + e + '%');
       }
       acc = e;
     });
