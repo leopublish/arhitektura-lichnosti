@@ -83,7 +83,11 @@ body::before{
 }
 body.presenter .container{max-width:1040px}
 
-.screen{display:flex;flex-direction:column;gap:18px}
+.screen{display:flex;flex-direction:column;gap:22px}
+/* тонкая золотая линия — «линия чертежа» между крупными блоками */
+.rule{height:1px;border:0;margin:0;background:linear-gradient(90deg,var(--gold),transparent 80%);opacity:.55}
+.form-row{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch}
+.form-row .input{flex:1 1 240px;min-width:0}
 .enter{animation:enter .45s ease both}
 @keyframes enter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
@@ -96,7 +100,7 @@ h2{font-size:clamp(22px,5vw,32px);line-height:1.22;font-weight:600}
 p{margin:0}
 
 /* Hero */
-.hero{display:flex;flex-direction:column;gap:14px;padding-top:clamp(8px,4vw,36px)}
+.hero{display:flex;flex-direction:column;gap:16px;padding-top:clamp(12px,6vw,56px);padding-bottom:clamp(4px,2vw,14px)}
 .subtitle{font-size:clamp(17px,2.6vw,21px);line-height:1.45;max-width:36ch}
 /* четыре «этажа» — четыре фактора, из которых строится личность */
 .floors{display:flex;flex-direction:column;gap:5px;width:max-content;margin-top:4px}
@@ -189,7 +193,7 @@ p{margin:0}
   padding:18px;
   min-height:84px;
   cursor:pointer;
-  box-shadow:var(--shadow);
+  box-shadow:0 1px 2px rgba(8,18,48,.04);
   transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
   -webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
@@ -251,10 +255,14 @@ p{margin:0}
 .presenter .bar-label,.presenter .bar-value{font-size:clamp(15px,2vw,20px)}
 .presenter .bar-track{height:16px}
 .manual{display:flex;flex-wrap:wrap;gap:8px}
-.status{font-weight:600}
+.status{font-weight:600;display:flex;align-items:center;gap:10px}
+.status::before{content:"";flex:0 0 10px;width:10px;height:10px;border-radius:50%;background:var(--muted);opacity:.6}
+.status.live::before{background:var(--f2);opacity:1;box-shadow:0 0 0 0 var(--f2);animation:pulse 2s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(27,157,134,.5)}100%{box-shadow:0 0 0 10px rgba(27,157,134,0)}}
+.result-head{display:flex;flex-direction:column;gap:12px}
 
 @media (prefers-reduced-motion:reduce){
-  .enter,.floors span{animation:none}
+  .enter,.floors span,.status.live::before{animation:none}
   .btn,.answer,.answer .mark,.answer .mark::after,.progress-fill,.bar-fill,.input{transition:none}
   .btn-primary:hover,.answer:hover{transform:none}
 }
@@ -271,11 +279,14 @@ p{margin:0}
       <p class="subtitle muted">Факторы развития личности: что делает нас лучше каждый день?</p>
       <div class="floors" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
     </div>
+    <hr class="rule">
     <div class="card stack intro">
       <p>10 жизненных ситуаций. Правильных и неправильных ответов нет — каждый вариант отражает ваш приоритет. В конце вы увидите, какой фактор влияет на вас сильнее всего.</p>
       <p class="quote">«Каждый человек уникален. Но что именно больше всего влияет на то, кем мы становимся?»</p>
-      <input class="input" id="nameInput" type="text" placeholder="Имя или псевдоним (по желанию)" maxlength="24" autocomplete="off" aria-label="Имя или псевдоним (по желанию)">
-      <button class="btn btn-primary self-start" id="startBtn" type="button">Начать игру</button>
+      <div class="form-row">
+        <input class="input" id="nameInput" type="text" placeholder="Имя или псевдоним (по желанию)" maxlength="24" autocomplete="off" aria-label="Имя или псевдоним (по желанию)">
+        <button class="btn btn-primary" id="startBtn" type="button">Начать игру</button>
+      </div>
     </div>
     <button class="btn btn-ghost self-start" id="presenterBtn" type="button">Режим ведущего</button>
   </section>
@@ -298,8 +309,11 @@ p{margin:0}
 
   <!-- SCREEN 3: RESULT -->
   <section class="screen" id="screen-result" hidden>
-    <p class="tag" id="resultTag">Ваш результат</p>
-    <h2 class="result-title" id="resultTitle"></h2>
+    <div class="result-head">
+      <p class="tag" id="resultTag">Ваш результат</p>
+      <h2 class="result-title" id="resultTitle"></h2>
+    </div>
+    <hr class="rule">
     <div class="stack" id="leaderCards"></div>
     <div class="card chart">
       <div class="donut" id="donut"><div class="donut-value" id="donutValue"></div></div>
@@ -790,8 +804,22 @@ p{margin:0}
       cards.appendChild(c);
     });
 
-    var a = pct[0], b = a + pct[1], c2 = b + pct[2];
-    $('donut').style.background = 'conic-gradient(from 0deg, var(--f0) 0% ' + a + '%, var(--f1) ' + a + '% ' + b + '%, var(--f2) ' + b + '% ' + c2 + '%, var(--f3) ' + c2 + '% 100%)';
+    // сегменты по порядку 0→3 от верхней точки; тонкие зазоры цвета карточки между сегментами
+    var stops = [], acc = 0, GAP = 0.6;
+    var nonZero = pct.filter(function(p){ return p > 0; }).length;
+    pct.forEach(function(p, f){
+      if (!p) return;
+      var s = acc, e = acc + p;
+      if (nonZero > 1){
+        stops.push('var(--card) ' + s + '% ' + (s + GAP) + '%');
+        stops.push('var(--f' + f + ') ' + (s + GAP) + '% ' + (e - GAP) + '%');
+        stops.push('var(--card) ' + (e - GAP) + '% ' + e + '%');
+      } else {
+        stops.push('var(--f' + f + ') ' + s + '% ' + e + '%');
+      }
+      acc = e;
+    });
+    $('donut').style.background = 'conic-gradient(from 0deg, ' + stops.join(', ') + ')';
     $('donutValue').textContent = pct[leaders[0]] + '%';
 
     buildBars($('resultBars'), [0, 1, 2, 3].map(function(f){
@@ -831,6 +859,7 @@ p{margin:0}
         row.querySelector('.bar-fill').style.width = it.width + '%';
       });
     }
+    $('pStatus').classList.toggle('live', liveAvailable());
     $('pStatus').textContent = liveAvailable()
       ? 'Онлайн-сбор включён: результаты участников приходят автоматически.'
       : 'Онлайн-сбор недоступен: добавляйте результаты вручную.';
