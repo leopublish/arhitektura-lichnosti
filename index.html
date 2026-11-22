@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Образовательная игра-опрос: факторы развития личности.">
+<title>Архитектура личности</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:wght@600;700&display=swap">
+<style>
+/* Layout: одна колонка 760px (1040px у ведущего) на «чертёжной» сетке; золотое свечение сверху, карточки как листы проекта */
+:root{
+  --bg:#f4f5fa;--text:#0b1b3d;--muted:#5b6684;--card:#ffffff;--line:#dbe0ee;--gold:#a87a1f;
+  --f0:#c9972b;--f1:#3b6fd6;--f2:#1b9d86;--f3:#d4506c;
+  --grid:rgba(11,27,61,.045);
+  --soft:rgba(11,27,61,.04);
+  --shadow:0 8px 24px rgba(8,18,48,.08);
+  --shadow-lift:0 14px 32px rgba(8,18,48,.12);
+  --font-text:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-display:"Playfair Display",Georgia,serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#081230;--text:#f4f1e8;--muted:#9ba7c7;--card:#102050;--line:#24376f;--gold:#e2bb4f;
+    --f0:#e2bb4f;--f1:#6c9bff;--f2:#3ccfb4;--f3:#ff8aa1;
+    --grid:rgba(155,167,199,.06);
+    --soft:rgba(244,241,232,.04);
+    --shadow:0 8px 24px rgba(0,0,0,.3);
+    --shadow-lift:0 14px 32px rgba(0,0,0,.4);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#081230;--text:#f4f1e8;--muted:#9ba7c7;--card:#102050;--line:#24376f;--gold:#e2bb4f;
+  --f0:#e2bb4f;--f1:#6c9bff;--f2:#3ccfb4;--f3:#ff8aa1;
+  --grid:rgba(155,167,199,.06);
+  --soft:rgba(244,241,232,.04);
+  --shadow:0 8px 24px rgba(0,0,0,.3);
+  --shadow-lift:0 14px 32px rgba(0,0,0,.4);
+  color-scheme:dark;
+}
+:root[data-theme="light"]{color-scheme:light}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  margin:0;
+  min-height:100vh;
+  min-height:100dvh;
+  background-color:var(--bg);
+  background-image:radial-gradient(70% 40% at 50% 0,rgba(212,175,55,.16),transparent);
+  background-repeat:no-repeat;
+  color:var(--text);
+  font-family:var(--font-text);
+  font-size:16px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  position:relative;
+}
+/* «чертёжная» сетка — тема архитектуры, гаснет к низу */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(var(--grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:32px 32px;
+  -webkit-mask-image:linear-gradient(180deg,#000 0,rgba(0,0,0,.35) 55%,transparent 100%);
+  mask-image:linear-gradient(180deg,#000 0,rgba(0,0,0,.35) 55%,transparent 100%);
+}
+[hidden]{display:none!important}
+
+.container{
+  position:relative;z-index:1;
+  max-width:760px;
+  margin:0 auto;
+  padding-top:22px;
+  padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));
+  padding-left:max(18px,env(safe-area-inset-left,0px));
+  padding-right:max(18px,env(safe-area-inset-right,0px));
+}
+body.presenter .container{max-width:1040px}
+
+.screen{display:flex;flex-direction:column;gap:18px}
+.enter{animation:enter .45s ease both}
+@keyframes enter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance}
+h1{font-size:clamp(34px,9vw,60px);line-height:1.05;font-weight:700;letter-spacing:-.015em}
+h2{font-size:clamp(22px,5vw,32px);line-height:1.22;font-weight:600}
+.gold{color:var(--gold)}
+.tag{text-transform:uppercase;color:var(--gold);font-size:13px;font-weight:600;letter-spacing:.08em;margin:0}
+.muted{color:var(--muted)}
+p{margin:0}
+
+/* Hero */
+.hero{display:flex;flex-direction:column;gap:14px;padding-top:clamp(8px,4vw,36px)}
+.subtitle{font-size:clamp(17px,2.6vw,21px);line-height:1.45;max-width:36ch}
+/* четыре «этажа» — четыре фактора, из которых строится личность */
+.floors{display:flex;flex-direction:column;gap:5px;width:max-content;margin-top:4px}
+.floors span{display:block;height:6px;border-radius:3px;transform-origin:left center;animation:build .6s cubic-bezier(.2,.8,.2,1) both}
+.floors span:nth-child(1){width:56px;background:var(--f3);animation-delay:.36s}
+.floors span:nth-child(2){width:84px;background:var(--f2);animation-delay:.24s}
+.floors span:nth-child(3){width:112px;background:var(--f1);animation-delay:.12s}
+.floors span:nth-child(4){width:140px;background:var(--f0)}
+@keyframes build{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px;
+  box-shadow:var(--shadow);
+}
+.stack{display:flex;flex-direction:column;gap:14px}
+.intro{padding:clamp(18px,4vw,28px)}
+.quote{font-style:italic;color:var(--muted);padding-left:14px;border-left:2px solid var(--gold)}
+
+.input{
+  width:100%;
+  font:inherit;
+  font-size:17px;
+  color:var(--text);
+  background:var(--soft);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:13px 14px;
+  outline:none;
+  transition:border-color .2s ease,background-color .2s ease;
+}
+.input::placeholder{color:var(--muted)}
+.input:focus{border-color:var(--gold);background:var(--card)}
+
+.btn{
+  font-family:var(--font-text);
+  cursor:pointer;
+  border-radius:999px;
+  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.btn:focus-visible,.answer:focus-visible,.input:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.btn-primary{
+  background:linear-gradient(135deg,#ecc965,#b8892b);
+  color:#0b1b3d;
+  font-size:17px;
+  font-weight:600;
+  padding:14px 28px;
+  border:0;
+  box-shadow:0 8px 20px rgba(184,137,43,.3),inset 0 1px 0 rgba(255,255,255,.35);
+}
+.btn-ghost{
+  background:transparent;
+  color:var(--text);
+  border:1px solid var(--line);
+  font-size:15px;
+  font-weight:600;
+  padding:10px 18px;
+}
+.btn-small{font-size:14px;padding:8px 14px}
+@media (hover:hover){
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(184,137,43,.36),inset 0 1px 0 rgba(255,255,255,.35)}
+  .btn-ghost:hover{border-color:var(--gold)}
+}
+.btn:active{transform:translateY(0)}
+.self-start{align-self:flex-start}
+
+/* Quiz */
+.top-row{display:flex;align-items:center;gap:14px}
+.counter{color:var(--gold);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums;min-width:3.2em}
+.progress{flex:1;height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+.progress-fill{height:100%;width:0;background:var(--gold);border-radius:999px;transition:width .35s ease}
+.question{padding-top:6px;max-width:30ch}
+
+.answers{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:700px){.answers{grid-template-columns:1fr 1fr}}
+.answer{
+  display:flex;align-items:flex-start;gap:14px;
+  font:inherit;
+  font-size:17px;
+  line-height:1.42;
+  color:var(--text);
+  text-align:left;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:18px;
+  min-height:84px;
+  cursor:pointer;
+  box-shadow:var(--shadow);
+  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.answer .mark{
+  flex:0 0 20px;width:20px;height:20px;margin-top:2px;border-radius:50%;
+  border:2px solid var(--line);position:relative;transition:border-color .2s ease;
+}
+.answer .mark::after{
+  content:"";position:absolute;inset:3px;border-radius:50%;background:var(--gold);
+  transform:scale(0);transition:transform .2s ease;
+}
+.answer-text{min-width:0}
+@media (hover:hover){
+  .answer:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:var(--shadow-lift)}
+  .answer:hover .mark{border-color:var(--gold)}
+}
+.answer.selected{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold),var(--shadow)}
+.answer.selected .mark{border-color:var(--gold)}
+.answer.selected .mark::after{transform:scale(1)}
+
+.nav-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-height:46px}
+.nav-row .spacer{flex:1}
+
+/* Result */
+.result-title{font-family:var(--font-display);font-weight:700;font-size:clamp(26px,6.5vw,44px);line-height:1.15;margin:0;text-wrap:balance}
+.leader-card{padding:clamp(18px,4vw,26px)}
+.leader-name{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:clamp(20px,3.6vw,26px);line-height:1.2;color:var(--gold);margin:0}
+.dot{flex:0 0 auto;width:12px;height:12px;border-radius:50%;display:inline-block}
+.leader-card strong{font-weight:600}
+.chart{display:flex;flex-wrap:wrap;align-items:center;gap:28px;padding:clamp(18px,4vw,26px)}
+.donut{position:relative;width:172px;height:172px;flex:0 0 172px;border-radius:50%;background:var(--line);margin:0 auto}
+.donut::after{content:"";position:absolute;inset:28px;border-radius:50%;background:var(--card)}
+.donut-value{
+  position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:700;font-size:28px;font-variant-numeric:tabular-nums;
+}
+.bars{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.bar-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 12px;align-items:center}
+.bar-label{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;min-width:0}
+.bar-label .dot{width:10px;height:10px}
+.bar-value{font-weight:600;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.bar-track{grid-column:1 / -1;height:12px;border-radius:999px;background:var(--line);overflow:hidden}
+.bar-fill{height:100%;width:0;border-radius:999px;transition:width .7s ease}
+.note{font-size:15px;max-width:68ch}
+.btn-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+
+/* Presenter */
+.presenter-row{display:flex;flex-wrap:wrap;gap:18px;align-items:stretch;justify-content:space-between}
+.count-block{display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:0}
+.big-count{font-family:var(--font-display);font-weight:700;color:var(--gold);font-size:clamp(54px,14vw,110px);line-height:1;font-variant-numeric:tabular-nums}
+.count-caption{font-size:clamp(15px,2vw,19px)}
+.qr-card{display:flex;flex-direction:column;align-items:center;gap:10px;margin:0 auto 0 0}
+@media (min-width:620px){.qr-card{margin:0}}
+.qr-box{width:190px;height:190px;padding:10px;background:#ffffff;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.qr-box img,.qr-box canvas{width:170px;height:170px}
+.qr-caption{font-weight:600;text-align:center}
+.p-bars{padding:clamp(18px,3vw,28px);gap:20px}
+.presenter .bar-label,.presenter .bar-value{font-size:clamp(15px,2vw,20px)}
+.presenter .bar-track{height:16px}
+.manual{display:flex;flex-wrap:wrap;gap:8px}
+.status{font-weight:600}
+
+@media (prefers-reduced-motion:reduce){
+  .enter,.floors span{animation:none}
+  .btn,.answer,.answer .mark,.answer .mark::after,.progress-fill,.bar-fill,.input{transition:none}
+  .btn-primary:hover,.answer:hover{transform:none}
+}
+</style>
+</head>
+<body>
+<main class="container" id="app">
+
+  <!-- SCREEN 1: START -->
+  <section class="screen" id="screen-start">
+    <div class="hero">
+      <p class="tag">Образовательная игра-опрос</p>
+      <h1>Архитектура <span class="gold">личности</span></h1>
+      <p class="subtitle muted">Факторы развития личности: что делает нас лучше каждый день?</p>
+      <div class="floors" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    </div>
+    <div class="card stack intro">
+      <p>10 жизненных ситуаций. Правильных и неправильных ответов нет — каждый вариант отражает ваш приоритет. В конце вы увидите, какой фактор влияет на вас сильнее всего.</p>
+      <p class="quote">«Каждый человек уникален. Но что именно больше всего влияет на то, кем мы становимся?»</p>
+      <input class="input" id="nameInput" type="text" placeholder="Имя или псевдоним (по желанию)" maxlength="24" autocomplete="off" aria-label="Имя или псевдоним (по желанию)">
+      <button class="btn btn-primary self-start" id="startBtn" type="button">Начать игру</button>
+    </div>
+    <button class="btn btn-ghost self-start" id="presenterBtn" type="button">Режим ведущего</button>
+  </section>
+
+  <!-- SCREEN 2: QUESTIONS -->
+  <section class="screen" id="screen-quiz" hidden>
+    <div class="top-row">
+      <span class="counter" id="qCounter" aria-live="polite">1/10</span>
+      <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="10" aria-label="Прогресс" id="qProgress"><div class="progress-fill" id="qFill"></div></div>
+    </div>
+    <h2 class="question" id="qText"></h2>
+    <div class="answers" id="answers"></div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" id="backBtn" type="button">← Назад</button>
+      <span class="spacer"></span>
+      <button class="btn btn-ghost" id="nextBtn" type="button">Далее →</button>
+      <button class="btn btn-primary" id="finishBtn" type="button">Узнать результат</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 3: RESULT -->
+  <section class="screen" id="screen-result" hidden>
+    <p class="tag" id="resultTag">Ваш результат</p>
+    <h2 class="result-title" id="resultTitle"></h2>
+    <div class="stack" id="leaderCards"></div>
+    <div class="card chart">
+      <div class="donut" id="donut"><div class="donut-value" id="donutValue"></div></div>
+      <div class="bars" id="resultBars"></div>
+    </div>
+    <p class="note muted">Все четыре фактора взаимосвязаны и вместе формируют личность: природные задатки проявляются в среде, среда и воспитание формируют ценности, а самовоспитание помогает осознанно развивать всё остальное. Это образовательная модель индивидуальных приоритетов, а не психологический диагноз.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="againBtn" type="button">Пройти заново</button>
+      <button class="btn btn-ghost" id="homeBtn" type="button">На главную</button>
+    </div>
+  </section>
+
+  <!-- PRESENTER MODE -->
+  <section class="screen presenter" id="screen-presenter" hidden>
+    <p class="tag">Режим ведущего</p>
+    <div class="presenter-row">
+      <div class="count-block">
+        <div class="big-count" id="pCount" aria-live="polite">0</div>
+        <p class="muted count-caption">участников · анонимная статистика</p>
+      </div>
+      <div class="card qr-card">
+        <div class="qr-box"><div id="qr"></div></div>
+        <p class="qr-caption">Присоединяйтесь по QR-коду</p>
+      </div>
+    </div>
+    <div class="card bars p-bars" id="pBars"></div>
+    <div class="card stack">
+      <p class="muted">Ссылка для QR — вставьте адрес опубликованной игры, если он отличается.</p>
+      <input class="input" id="qrUrl" type="text" autocomplete="off" aria-label="Ссылка для QR">
+      <p class="status" id="pStatus" aria-live="polite"></p>
+      <p>Добавить результат вручную:</p>
+      <div class="manual" id="manualBtns"></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" id="toGameBtn" type="button">← К игре</button>
+      <button class="btn btn-ghost" id="resetBtn" type="button">Сбросить результаты</button>
+    </div>
+  </section>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  /* ---------- DATA ---------- */
+  var FACTORS = [
+    {
+      name: 'Наследственность и природные задатки',
+      short: 'Природные задатки',
+      desc: 'Вы склонны искать корни своих качеств в природных способностях и темпераменте. Для вас важно опираться на врождённые сильные стороны и особенности.',
+      str: 'Естественность, быстрое ощущение того, что получается легко, уверенность в своей индивидуальности.',
+      lim: 'Риск принять способности за неизменные и не развивать то, что даётся труднее.'
+    },
+    {
+      name: 'Социальная среда',
+      short: 'Социальная среда',
+      desc: 'Вы воспринимаете развитие как результат общения, поддержки близких и условий, в которых живёте. Для вас важны люди рядом и атмосфера вокруг.',
+      str: 'Эмпатия, умение работать в команде, чуткость к людям и контексту.',
+      lim: 'Риск зависеть от чужих оценок и обстоятельств и терять собственное направление.'
+    },
+    {
+      name: 'Воспитание и образование',
+      short: 'Воспитание и образование',
+      desc: 'Вы цените знания, наставников и ценности, полученные в семье и учёбе. Развитие для вас — это усвоение опыта, накопленного другими.',
+      str: 'Системность, уважение к знаниям, прочная нравственная опора.',
+      lim: 'Риск полагаться на готовые рецепты и ждать подсказок вместо собственных шагов.'
+    },
+    {
+      name: 'Самовоспитание и саморазвитие',
+      short: 'Самовоспитание',
+      desc: 'Вы склонны рассматривать личный рост как результат собственных решений, дисциплины и постоянной работы над собой. Для вас важны самостоятельность и ответственность за собственное развитие.',
+      str: 'Целеустремлённость, самостоятельность, умение учиться на своих ошибках.',
+      lim: 'Риск перегрузить себя самокритикой и недооценить роль поддержки и условий.'
+    }
+  ];
+
+  var QUESTIONS = [
+    { q: 'Друзья говорят, что у вас особенный характер. Как вы объясняете это себе?', a: [
+      'Это то, с чем я пришёл в мир, — моя природа',
+      'Это отпечаток людей, рядом с которыми я рос',
+      'Так меня учили держаться и поступать с детства',
+      'Я сам выстраивал его шаг за шагом'
+    ]},
+    { q: 'Вы выбираете профессию на ближайшие годы. Что станет решающим?', a: [
+      'Ощущение, что именно это даётся мне легко',
+      'Мнение семьи и близкого круга',
+      'Совет уважаемого преподавателя или наставника',
+      'Мой план на пять лет и чёткие цели'
+    ]},
+    { q: 'Вы провалили важный экзамен. Что поможет собраться?', a: [
+      'Спокойный склад: я быстро прихожу в себя',
+      'Поддержка друзей и близких',
+      'Разбор материала с опытным преподавателем',
+      'Честный разбор своих ошибок и новый график'
+    ]},
+    { q: 'Утро понедельника, сил нет совсем. Что заставит встать?', a: [
+      'Внутренняя энергия: мне просто нужно двигаться',
+      'Не хочу подвести тех, кто на меня рассчитывает',
+      'Усвоенное с детства чувство долга',
+      'Цель, к которой я иду каждый день'
+    ]},
+    { q: 'У вас амбициозная цель. Что важнее всего для её достижения?', a: [
+      'Талант: склонность либо есть, либо её нет',
+      'Окружение единомышленников, которое тянет вперёд',
+      'Глубокие знания и сильный наставник',
+      'Дисциплина, даже если вокруг никто не верит'
+    ]},
+    { q: 'Вам предложили выгодную, но сомнительную сделку, и вы отказались. Почему?', a: [
+      'Это противоречит моей натуре',
+      'В моей среде так не принято',
+      'Меня воспитывали в принципах честности',
+      'Я сам определил свои принципы и следую им'
+    ]},
+    { q: 'Вы хотите завести полезную привычку. Как она закрепится у вас?', a: [
+      'Приживается лишь то, что совпадает с моим природным ритмом',
+      'Когда делаю это вместе с друзьями или семьёй',
+      'Когда изучу тему и пойму, как это работает',
+      'С помощью трекера, правил и самоконтроля'
+    ]},
+    { q: 'Вы заметили, что у вас что-то получается лучше, чем у других. Как это раскрылось?', a: [
+      'Проявилось само, почти без подготовки',
+      'Когда жизнь поставила меня в нужные обстоятельства',
+      'После занятий с хорошим учителем или на курсах',
+      'После месяцев упорных тренировок'
+    ]},
+    { q: 'Вас жёстко раскритиковали за работу. Какова первая реакция?', a: [
+      'Эмоции быстрее мыслей — такой уж у меня темперамент',
+      'Сверю услышанное с мнением других людей',
+      'Вспомню, что критику учили выслушивать и извлекать из неё урок',
+      'Выпишу замечания и составлю план улучшений'
+    ]},
+    { q: 'Через десять лет вы оглянетесь назад. Что назовёте главным в своём пути?', a: [
+      'Способности, заложенные во мне изначально',
+      'Людей рядом и обстоятельства жизни',
+      'Знания и ценности, полученные в обучении',
+      'Мои решения и ежедневную работу над собой'
+    ]}
+  ];
+
+  var TOTAL = QUESTIONS.length; // 10
+
+  /* ---------- HELPERS ---------- */
+  function $(id){ return document.getElementById(id); }
+  function escapeHtml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function shuffle(arr){
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function playEnter(el){
+    el.classList.remove('enter');
+    void el.offsetWidth;
+    el.classList.add('enter');
+  }
+  function fmt(n){
+    var r = Math.round(n * 10) / 10;
+    if (Math.abs(r - Math.round(r)) < 1e-9) return String(Math.round(r));
+    return r.toFixed(1).replace('.', ',');
+  }
+  function randomId(){
+    var chars = 'abcdefghijklmnopqrstuvwxyz0123456789', s = '';
+    for (var i = 0; i < 8; i++) s += chars.charAt(Math.floor(Math.random() * chars.length));
+    return s;
+  }
+  function makeDot(f){
+    var d = document.createElement('span');
+    d.className = 'dot';
+    d.style.background = 'var(--f' + f + ')';
+    d.setAttribute('aria-hidden', 'true');
+    return d;
+  }
+
+  /* ---------- LOCAL STORAGE (try/catch + in-memory fallback) ---------- */
+  var memStore = {};
+  var store = {
+    get: function(k){
+      try {
+        var v = window.localStorage.getItem(k);
+        if (v !== null) return v;
+      } catch (e) {}
+      return Object.prototype.hasOwnProperty.call(memStore, k) ? memStore[k] : null;
+    },
+    set: function(k, v){
+      memStore[k] = v;
+      try { window.localStorage.setItem(k, v); } catch (e) {}
+    }
+  };
+  var TALLY_KEY = 'arch-lichnosti-tally';
+  function getTally(){
+    try {
+      var raw = store.get(TALLY_KEY);
+      var arr = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(arr) && arr.length === 4) return arr.map(function(x){ return Number(x) || 0; });
+    } catch (e) {}
+    return [0, 0, 0, 0];
+  }
+  function setTally(t){
+    try { store.set(TALLY_KEY, JSON.stringify(t)); } catch (e) {}
+  }
+  function addToTally(leaders){
+    var t = getTally();
+    var share = 1 / leaders.length;
+    leaders.forEach(function(f){ t[f] += share; });
+    setTally(t);
+  }
+
+  /* ---------- SHARED STORAGE (best effort, never breaks the app) ---------- */
+  var liveOk = true;
+  function sharedApi(){
+    try {
+      var s = window.storage;
+      if (s && typeof s.set === 'function' && typeof s.list === 'function' && typeof s.delete === 'function') return s;
+    } catch (e) {}
+    return null;
+  }
+  function liveAvailable(){ return !!sharedApi() && liveOk; }
+
+  function extractKeys(res){
+    var keys = [];
+    try {
+      var list = Array.isArray(res) ? res : (res && Array.isArray(res.keys) ? res.keys : []);
+      list.forEach(function(k){
+        var key = typeof k === 'string' ? k : (k && typeof k.key === 'string' ? k.key : null);
+        if (key && key.indexOf('r:') === 0) keys.push(key);
+      });
+    } catch (e) {}
+    return keys;
+  }
+
+  function recordResult(leaders){
+    var s = liveAvailable() ? sharedApi() : null;
+    if (!s){ addToTally(leaders); return; }
+    var key = 'r:' + randomId() + ':' + leaders.join('');
+    try {
+      Promise.resolve(s.set(key, '1', true)).then(function(res){
+        if (res === null || res === false){ addToTally(leaders); }
+      }).catch(function(){
+        liveOk = false;
+        addToTally(leaders);
+      });
+    } catch (e) {
+      liveOk = false;
+      addToTally(leaders);
+    }
+  }
+
+  var sharedCounts = [0, 0, 0, 0];
+  var sharedKeys = [];
+
+  function fetchShared(){
+    var s = liveAvailable() ? sharedApi() : null;
+    if (!s) return Promise.resolve();
+    try {
+      return Promise.resolve(s.list('r:', true)).then(function(res){
+        var keys = extractKeys(res);
+        var counts = [0, 0, 0, 0];
+        keys.forEach(function(key){
+          var suffix = key.split(':')[2] || '';
+          var idx = [];
+          for (var i = 0; i < suffix.length; i++){
+            var d = parseInt(suffix.charAt(i), 10);
+            if (d >= 0 && d <= 3 && idx.indexOf(d) === -1) idx.push(d);
+          }
+          if (!idx.length) return;
+          var share = 1 / idx.length;
+          idx.forEach(function(d){ counts[d] += share; });
+        });
+        sharedCounts = counts;
+        sharedKeys = keys;
+      }).catch(function(){
+        liveOk = false;
+        sharedCounts = [0, 0, 0, 0];
+        sharedKeys = [];
+      });
+    } catch (e) {
+      liveOk = false;
+      return Promise.resolve();
+    }
+  }
+
+  function deleteShared(){
+    var s = sharedApi();
+    if (!s) return Promise.resolve();
+    var doDelete = function(keys){
+      return Promise.all(keys.map(function(k){
+        try { return Promise.resolve(s.delete(k, true)).catch(function(){}); }
+        catch (e) { return Promise.resolve(); }
+      }));
+    };
+    try {
+      return Promise.resolve(s.list('r:', true)).then(function(res){
+        return doDelete(extractKeys(res));
+      }).catch(function(){ return doDelete(sharedKeys); });
+    } catch (e) {
+      return doDelete(sharedKeys);
+    }
+  }
+
+  /* ---------- STATE ---------- */
+  var state = { screen: 'start', order: [], answers: [], cur: 0, timer: null, recorded: false };
+
+  function clearTimer(){
+    if (state.timer !== null){ clearTimeout(state.timer); state.timer = null; }
+  }
+
+  function newGame(){
+    clearTimer();
+    state.order = QUESTIONS.map(function(){ return shuffle([0, 1, 2, 3]); });
+    state.answers = QUESTIONS.map(function(){ return null; });
+    state.cur = 0;
+    state.recorded = false;
+  }
+
+  var screens = {
+    start: $('screen-start'),
+    quiz: $('screen-quiz'),
+    result: $('screen-result'),
+    presenter: $('screen-presenter')
+  };
+
+  function show(name){
+    clearTimer();
+    state.screen = name;
+    Object.keys(screens).forEach(function(k){ screens[k].hidden = (k !== name); });
+    document.body.classList.toggle('presenter', name === 'presenter');
+    if (name === 'presenter') startPolling(); else stopPolling();
+    playEnter(screens[name]);
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+
+  /* ---------- QUIZ ---------- */
+  function renderQuestion(){
+    var qi = state.cur;
+    var Q = QUESTIONS[qi];
+    $('qCounter').textContent = (qi + 1) + '/' + TOTAL;
+    $('qFill').style.width = ((qi + 1) * 10) + '%';
+    $('qProgress').setAttribute('aria-valuenow', String(qi + 1));
+    $('qText').textContent = Q.q;
+    var grid = $('answers');
+    grid.innerHTML = '';
+    state.order[qi].forEach(function(f){
+      var on = state.answers[qi] === f;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'answer' + (on ? ' selected' : '');
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.setAttribute('data-f', String(f));
+      var mark = document.createElement('span');
+      mark.className = 'mark';
+      mark.setAttribute('aria-hidden', 'true');
+      var txt = document.createElement('span');
+      txt.className = 'answer-text';
+      txt.textContent = Q.a[f];
+      b.appendChild(mark);
+      b.appendChild(txt);
+      b.addEventListener('click', function(){ selectAnswer(qi, f); });
+      grid.appendChild(b);
+    });
+    updateNav();
+  }
+
+  function updateNav(){
+    var qi = state.cur;
+    var answered = state.answers[qi] !== null;
+    $('backBtn').hidden = qi === 0;
+    $('nextBtn').hidden = !(qi < TOTAL - 1 && answered);
+    $('finishBtn').hidden = !(qi === TOTAL - 1 && answered);
+  }
+
+  function goToQuestion(i){
+    clearTimer();
+    if (i < 0 || i >= TOTAL) return;
+    state.cur = i;
+    renderQuestion();
+    playEnter(screens.quiz);
+  }
+
+  function selectAnswer(qi, f){
+    if (state.screen !== 'quiz' || qi !== state.cur) return;
+    clearTimer();
+    state.answers[qi] = f;
+    var btns = $('answers').querySelectorAll('.answer');
+    for (var i = 0; i < btns.length; i++){
+      var on = Number(btns[i].getAttribute('data-f')) === f;
+      btns[i].classList.toggle('selected', on);
+      btns[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    updateNav();
+    if (qi < TOTAL - 1){
+      state.timer = setTimeout(function(){
+        state.timer = null;
+        if (state.screen === 'quiz' && state.cur === qi && state.answers[qi] !== null){
+          goToQuestion(qi + 1);
+        }
+      }, 350);
+    }
+  }
+
+  /* ---------- RESULT ---------- */
+  function computeScores(){
+    var scores = [0, 0, 0, 0];
+    state.answers.forEach(function(f){ if (f !== null) scores[f] += 1; });
+    return scores;
+  }
+  function leadersOf(scores){
+    var max = Math.max.apply(null, scores);
+    var res = [];
+    scores.forEach(function(s, i){ if (s === max) res.push(i); });
+    return res;
+  }
+
+  function buildBars(container, items){
+    container.innerHTML = '';
+    var fills = [];
+    items.forEach(function(it){
+      var row = document.createElement('div');
+      row.className = 'bar-row';
+      var label = document.createElement('span');
+      label.className = 'bar-label';
+      label.appendChild(makeDot(it.f));
+      label.appendChild(document.createTextNode(it.label));
+      var val = document.createElement('span');
+      val.className = 'bar-value';
+      val.textContent = it.valueText;
+      var track = document.createElement('div');
+      track.className = 'bar-track';
+      var fill = document.createElement('div');
+      fill.className = 'bar-fill';
+      fill.style.background = 'var(--f' + it.f + ')';
+      fill.style.width = '0%';
+      track.appendChild(fill);
+      row.appendChild(label);
+      row.appendChild(val);
+      row.appendChild(track);
+      container.appendChild(row);
+      fills.push({ el: fill, w: it.width });
+    });
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        fills.forEach(function(x){ x.el.style.width = x.w + '%'; });
+      });
+    });
+  }
+
+  function showResult(){
+    clearTimer();
+    for (var i = 0; i < TOTAL; i++){ if (state.answers[i] === null){ goToQuestion(i); return; } }
+    var scores = computeScores();
+    var pct = scores.map(function(s){ return s * 10; });
+    var leaders = leadersOf(scores);
+
+    if (!state.recorded){
+      state.recorded = true;
+      recordResult(leaders);
+    }
+
+    var name = $('nameInput').value.trim();
+    $('resultTag').innerHTML = name ? escapeHtml(name) + ' · Ваш результат' : 'Ваш результат';
+
+    var names = leaders.map(function(f){ return '<span class="gold">' + escapeHtml(FACTORS[f].name.toLowerCase()) + '</span>'; });
+    $('resultTitle').innerHTML = (leaders.length > 1 ? 'Ваши ведущие факторы — ' : 'Ваш ведущий фактор — ') + names.join(' и ');
+
+    var cards = $('leaderCards');
+    cards.innerHTML = '';
+    leaders.forEach(function(f){
+      var F = FACTORS[f];
+      var c = document.createElement('div');
+      c.className = 'card stack leader-card';
+      var h = document.createElement('h3');
+      h.className = 'leader-name';
+      h.appendChild(makeDot(f));
+      h.appendChild(document.createTextNode(F.name));
+      c.appendChild(h);
+      var body = document.createElement('div');
+      body.className = 'stack';
+      body.innerHTML =
+        '<p>' + escapeHtml(F.desc) + '</p>' +
+        '<p><strong>Сильные стороны:</strong> ' + escapeHtml(F.str) + '</p>' +
+        '<p><strong>Возможные ограничения:</strong> ' + escapeHtml(F.lim) + '</p>';
+      c.appendChild(body);
+      cards.appendChild(c);
+    });
+
+    var a = pct[0], b = a + pct[1], c2 = b + pct[2];
+    $('donut').style.background = 'conic-gradient(from 0deg, var(--f0) 0% ' + a + '%, var(--f1) ' + a + '% ' + b + '%, var(--f2) ' + b + '% ' + c2 + '%, var(--f3) ' + c2 + '% 100%)';
+    $('donutValue').textContent = pct[leaders[0]] + '%';
+
+    buildBars($('resultBars'), [0, 1, 2, 3].map(function(f){
+      return { f: f, label: FACTORS[f].short, valueText: pct[f] + '%', width: pct[f] };
+    }));
+
+    show('result');
+  }
+
+  /* ---------- PRESENTER ---------- */
+  var pollId = null;
+  var pBarsBuilt = false;
+
+  function totals(){
+    var t = getTally();
+    return [0, 1, 2, 3].map(function(i){ return (t[i] || 0) + (sharedCounts[i] || 0); });
+  }
+
+  function renderPresenter(){
+    var counts = totals();
+    var total = counts.reduce(function(s, x){ return s + x; }, 0);
+    $('pCount').textContent = fmt(total);
+    var items = counts.map(function(n, f){
+      var p = total > 0 ? Math.round(n / total * 100) : 0;
+      return { f: f, label: FACTORS[f].short, valueText: fmt(n) + ' · ' + p + '%', width: p };
+    });
+    var container = $('pBars');
+    if (!pBarsBuilt){
+      buildBars(container, items);
+      pBarsBuilt = true;
+    } else {
+      var rows = container.querySelectorAll('.bar-row');
+      items.forEach(function(it, i){
+        var row = rows[i];
+        if (!row) return;
+        row.querySelector('.bar-value').textContent = it.valueText;
+        row.querySelector('.bar-fill').style.width = it.width + '%';
+      });
+    }
+    $('pStatus').textContent = liveAvailable()
+      ? 'Онлайн-сбор включён: результаты участников приходят автоматически.'
+      : 'Онлайн-сбор недоступен: добавляйте результаты вручную.';
+  }
+
+  function refreshPresenter(){
+    renderPresenter();
+    fetchShared().then(function(){
+      if (state.screen === 'presenter') renderPresenter();
+    });
+  }
+
+  function startPolling(){
+    stopPolling();
+    pBarsBuilt = false;
+    refreshPresenter();
+    makeQR();
+    pollId = setInterval(function(){
+      if (state.screen !== 'presenter') return;
+      refreshPresenter();
+    }, 4000);
+  }
+  function stopPolling(){
+    if (pollId !== null){ clearInterval(pollId); pollId = null; }
+    resetArmed(false);
+  }
+
+  function makeQR(){
+    var el = $('qr');
+    el.innerHTML = '';
+    var text = $('qrUrl').value.trim();
+    if (!text) return;
+    if (typeof window.QRCode === 'undefined') return;
+    try {
+      new window.QRCode(el, { text: text, width: 170, height: 170, colorDark: '#0b1b3d', colorLight: '#ffffff' });
+    } catch (e) {
+      el.innerHTML = '';
+    }
+  }
+
+  var resetTimer = null;
+  var resetIsArmed = false;
+  function resetArmed(on){
+    if (resetTimer !== null){ clearTimeout(resetTimer); resetTimer = null; }
+    resetIsArmed = on;
+    $('resetBtn').textContent = on ? 'Нажмите ещё раз — сбросить' : 'Сбросить результаты';
+    if (on){ resetTimer = setTimeout(function(){ resetArmed(false); }, 4000); }
+  }
+  function doReset(){
+    resetArmed(false);
+    setTally([0, 0, 0, 0]);
+    sharedCounts = [0, 0, 0, 0];
+    renderPresenter();
+    deleteShared().then(function(){
+      sharedKeys = [];
+      sharedCounts = [0, 0, 0, 0];
+      if (state.screen === 'presenter') refreshPresenter();
+    });
+  }
+
+  /* ---------- EVENTS ---------- */
+  $('startBtn').addEventListener('click', function(){
+    newGame();
+    renderQuestion();
+    show('quiz');
+  });
+  $('nameInput').addEventListener('keydown', function(e){
+    if (e.key === 'Enter'){ e.preventDefault(); $('startBtn').click(); }
+  });
+  $('presenterBtn').addEventListener('click', function(){ show('presenter'); });
+  $('backBtn').addEventListener('click', function(){
+    clearTimer();
+    if (state.cur > 0) goToQuestion(state.cur - 1);
+  });
+  $('nextBtn').addEventListener('click', function(){
+    clearTimer();
+    if (state.cur < TOTAL - 1 && state.answers[state.cur] !== null) goToQuestion(state.cur + 1);
+  });
+  $('finishBtn').addEventListener('click', function(){
+    clearTimer();
+    if (state.cur === TOTAL - 1 && state.answers[state.cur] !== null) showResult();
+  });
+  $('againBtn').addEventListener('click', function(){
+    newGame();
+    renderQuestion();
+    show('quiz');
+  });
+  $('homeBtn').addEventListener('click', function(){ show('start'); });
+  $('toGameBtn').addEventListener('click', function(){ show('start'); });
+  $('resetBtn').addEventListener('click', function(){
+    if (resetIsArmed) doReset(); else resetArmed(true);
+  });
+  $('qrUrl').addEventListener('input', makeQR);
+
+  var manual = $('manualBtns');
+  FACTORS.forEach(function(F, f){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn btn-ghost btn-small';
+    b.textContent = '+ ' + F.short;
+    b.addEventListener('click', function(){
+      addToTally([f]);
+      renderPresenter();
+    });
+    manual.appendChild(b);
+  });
+
+  /* ---------- INIT ---------- */
+  try { $('qrUrl').value = String(window.location.href).split('#')[0]; } catch (e) { $('qrUrl').value = ''; }
+  newGame();
+  show('start');
+})();
+</script>
+</body>
+</html>
