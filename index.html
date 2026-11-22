@@ -312,7 +312,17 @@ p{margin:0}
         <p class="field-error" id="nameError" aria-live="polite"></p>
       </div>
     </div>
-    <button class="btn btn-ghost self-start" id="presenterBtn" type="button">Режим ведущего</button>
+    <button class="btn btn-ghost self-start" id="presenterBtn" type="button" aria-expanded="false" aria-controls="pinBox">Режим ведущего</button>
+    <div class="card stack pin-box" id="pinBox" hidden>
+      <div class="field">
+        <label class="field-label" for="pinInput">Пароль ведущего</label>
+        <div class="form-row">
+          <input class="input" id="pinInput" type="password" inputmode="numeric" autocomplete="off" maxlength="20" aria-describedby="pinError">
+          <button class="btn btn-primary" id="pinBtn" type="button">Войти</button>
+        </div>
+        <p class="field-error" id="pinError" aria-live="polite"></p>
+      </div>
+    </div>
   </section>
 
   <!-- SCREEN 2: QUESTIONS -->
@@ -1344,7 +1354,61 @@ p{margin:0}
   $('nameInput').addEventListener('keydown', function(e){
     if (e.key === 'Enter'){ e.preventDefault(); $('startBtn').click(); }
   });
-  $('presenterBtn').addEventListener('click', function(){ show('presenter'); });
+  /* вход ведущего: проверка по хешу, открытый доступ запоминается до закрытия вкладки */
+  var PIN_HASH = 'c19b7a11';
+  var PIN_KEY = 'arch-lichnosti-presenter';
+  var presenterUnlocked = false;
+  try { presenterUnlocked = window.sessionStorage.getItem(PIN_KEY) === '1'; } catch (e) {}
+  function pinHash(s){
+    var x = 0x811c9dc5;
+    s = 'arch-lichnosti:' + s;
+    for (var i = 0; i < s.length; i++){ x ^= s.charCodeAt(i); x = Math.imul(x, 0x01000193) >>> 0; }
+    return x.toString(16);
+  }
+  function openPresenter(){
+    $('pinBox').hidden = true;
+    $('presenterBtn').setAttribute('aria-expanded', 'false');
+    show('presenter');
+  }
+  function tryPin(){
+    var input = $('pinInput');
+    var v = input.value.trim();
+    if (!v){
+      $('pinError').textContent = 'Введите пароль ведущего.';
+      input.setAttribute('aria-invalid', 'true');
+      input.focus();
+      return;
+    }
+    if (pinHash(v) !== PIN_HASH){
+      $('pinError').textContent = 'Неверный пароль. Попробуйте ещё раз.';
+      input.setAttribute('aria-invalid', 'true');
+      input.select();
+      return;
+    }
+    presenterUnlocked = true;
+    try { window.sessionStorage.setItem(PIN_KEY, '1'); } catch (e) {}
+    input.value = '';
+    $('pinError').textContent = '';
+    input.setAttribute('aria-invalid', 'false');
+    openPresenter();
+  }
+  $('presenterBtn').addEventListener('click', function(){
+    if (presenterUnlocked){ openPresenter(); return; }
+    var box = $('pinBox');
+    box.hidden = !box.hidden;
+    $('presenterBtn').setAttribute('aria-expanded', box.hidden ? 'false' : 'true');
+    if (!box.hidden){ playEnter(box); $('pinInput').focus(); }
+  });
+  $('pinBtn').addEventListener('click', tryPin);
+  $('pinInput').addEventListener('keydown', function(e){
+    if (e.key === 'Enter'){ e.preventDefault(); tryPin(); }
+  });
+  $('pinInput').addEventListener('input', function(){
+    if ($('pinError').textContent){
+      $('pinError').textContent = '';
+      $('pinInput').setAttribute('aria-invalid', 'false');
+    }
+  });
   $('backBtn').addEventListener('click', function(){
     clearTimer();
     if (state.cur > 0) goToQuestion(state.cur - 1);
